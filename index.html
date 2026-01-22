@@ -22,10 +22,17 @@
     <header class="header">
       <h1 id="title">Will you go out with me? ❤️</h1>
       <p class="subtitle">A tiny bear asked me to ask you — be kind 😄</p>
+      <p id="signature" class="subtitle" aria-hidden="true" style="display:none"></p>
     </header>
 
+    <div class="name-form">
+      <input id="fromInput" type="text" placeholder="From (your name)" aria-label="From name">
+      <input id="toInput" type="text" placeholder="To (their name)" aria-label="To name">
+      <button id="setNamesBtn" class="btn">Set</button>
+    </div>
+
     <div class="hero">
-      <img id="bear" src="https://i.postimg.cc/MG1WynLY/happy-bear.png" alt="Smiling bear illustration" width="200" height="200">
+      <div id="bear" role="img" aria-label="Smiling bear">🐻</div>
     </div>
 
     <div class="buttons" aria-hidden="false">
