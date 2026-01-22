@@ -1,190 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Will You Go Out With Me?</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: #fff0f5;
-      font-family: 'Comic Sans MS', cursive;
-      overflow: hidden;
-      padding: 20px;
-      box-sizing: border-box;
-      text-align: center;
-    }
 
-    h1 {
-      color: #d81b60;
-      font-size: 2em;
-    }
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
 
-    #bear {
-      width: 150px;
-      height: auto;
-      transition: transform 0.3s;
-    }
+  <link rel="stylesheet" href="styles.css">
 
-    .buttons {
-      margin-top: 30px;
-      position: relative;
-      width: 100%;
-      max-width: 350px;
-      height: 200px;
-    }
+  <!-- Confetti -->
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    button {
-      padding: 15px 30px;
-      font-size: 18px;
-      margin: 10px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    #yesBtn {
-      background-color: #4caf50;
-      color: white;
-      width: 100%;
-    }
-
-    #noBtn {
-      background-color: #f44336;
-      color: white;
-      position: absolute;
-    }
-
-    audio {
-      display: none;
-    }
-
-    @media (max-width: 500px) {
-      h1 {
-        font-size: 1.5em;
-      }
-
-      #bear {
-        width: 100px;
-      }
-
-      button {
-        font-size: 16px;
-        padding: 12px 20px;
-      }
-
-      .buttons {
-        height: 150px;
-      }
-    }
-  </style>
+  <!-- Main script -->
+  <script defer src="script.js"></script>
 </head>
 <body>
 
-  <h1 id="title">Will you go out with me? ❤️</h1>
-  <img id="bear" src="https://i.imgur.com/XhF6o4Z.png" alt="Happy Bear"> <!-- Placeholder happy bear -->
+  <main class="card" role="main" aria-labelledby="title">
+    <header class="header">
+      <h1 id="title">Will you go out with me? ❤️</h1>
+      <p class="subtitle">A tiny bear asked me to ask you — be kind 😄</p>
+    </header>
 
-  <div class="buttons">
-    <button id="yesBtn">Yes</button>
-    <button id="noBtn">No</button>
+    <div class="hero">
+      <img id="bear" src="https://i.postimg.cc/MG1WynLY/happy-bear.png" alt="Smiling bear illustration" width="200" height="200">
+    </div>
+
+    <div class="buttons" aria-hidden="false">
+      <button id="yesBtn" class="btn btn-yes" aria-label="Yes, I will go out with you">Yes</button>
+      <button id="noBtn" class="btn btn-no" aria-label="No, I won't" title="Try to press me if you can">No</button>
+    </div>
+
+    <div class="controls">
+      <button id="musicBtn" class="icon-btn" aria-pressed="false" aria-label="Play background music">🔊</button>
+      <label for="volume" class="visually-hidden">Music volume</label>
+      <input id="volume" type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Volume slider">
+    </div>
+  </main>
+
+  <!-- Floating hearts container -->
+  <div id="hearts" aria-hidden="true"></div>
+
+  <!-- Modal shown when user clicks Yes -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <h2 id="modalTitle">YAY! 🥰</h2>
+      <p id="modalBody">I knew you'd say yes! Let's make a lovely plan together ✨</p>
+      <button id="modalClose" class="btn btn-yes">Close</button>
+    </div>
   </div>
 
-  <audio id="bigMusic" loop>
-    <source  src="https://www.audio id="bgMusic" loop>
-  <source 
-src="https;//cdn.pixabay.com/audio/2025/05/30/audio_b32a1ef693.mp3" type="audio/mp3">
-</audio>
-  <!-- 🎉 Confetti library -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <script>
-    const noBtn = document.getElementById('noBtn');
-    const yesBtn = document.getElementById('yesBtn');
-    const bear = document.getElementById('bear');
-    const music = document.getElementById('bgMusic');
-    const title = document.getElementById('title');
-    let musicStarted = false;
-
-    // Mood images (you can change to your own bear images)
-    const happyBearURL = "https://i.postimg.cc/MG1WynLY/happy-bear.png";
-    const sadBearURL = "https://i.postimg.cc/fyHzNvN8/sad-bear.png";
-
-    // Get name from URL if present
-    const params = new URLSearchParams(window.location.search);
-    const name = params.get("name");
-    if (name) {
-      title.textContent = `Will you go out with me, ${name}? ❤️`;
-    }
-
-    function getSad() {
-      bear.src = sadBearURL;
-      setTimeout(() => {
-        bear.src = happyBearURL;
-      }, 1500);
-    }
-
-    noBtn.addEventListener('mouseenter', () => {
-      const container = document.querySelector('.buttons');
-      const maxX = container.clientWidth - noBtn.offsetWidth;
-      const maxY = container.clientHeight - noBtn.offsetHeight;
-
-      const randX = Math.random() * maxX;
-      const randY = Math.random() * maxY;
-
-      noBtn.style.left = `${randX}px`;
-      noBtn.style.top = `${randY}px`;
-
-      getSad();
-      startMusic();
-    });
-
-    yesBtn.addEventListener('click', () => {
-      alert("Yaaay! 🥰 I knew you'd say yes!");
-      startMusic();
-      launchConfetti();
-    });
-
-    function startMusic() {
-      if (!musicStarted) {
-        music.play().catch(() => {});
-        musicStarted = true;
-      }
-    }
-
-    function launchConfetti() {
-      const duration = 2 * 1000;
-      const end = Date.now() + duration;
-
-      (function frame() {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 }
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 }
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      })();
-    }
-
-    // Trigger music on first interaction
-    document.body.addEventListener('click', startMusic, { once: true });
-    document.body.addEventListener('touchstart', startMusic, { once: true });
-  </script>
+  <!-- Background music -->
+  <audio id="bgMusic" loop preload="none">
+    <source src="https://cdn.pixabay.com/audio/2025/05/30/audio_b32a1ef693.mp3" type="audio/mp3">
+    <!-- Fallback: short silent mp3 in case external fails (data URI of 1s silent mp3) -->
+    <source src="data:audio/mpeg;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA..." type="audio/mp3">
+  </audio>
 
 </body>
 </html>
