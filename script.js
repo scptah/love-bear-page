@@ -36,14 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // initialize bear emoji (if element exists)
   if (bear) bear.textContent = happyEmoji;
 
-  // Defaults for pixel celebration
-  // Supply a direct image via ?pooh=URL (direct image link) or rely on fallback
-  const defaultPooh = ''; // leave empty so fallback SVG or data URI is used if not provided
+  // Defaults for pixel celebration (kept for backward compatibility)
+  const defaultPooh = '';
 
-  // Adjusted pixelation parameters (reduced scale)
-  // smaller final scale -> less huge blocks
+  // Adjusted pixelation parameters (for legacy pixelation option)
   const PIXEL_SMALL_WIDTH = 20; // small resolution used when downscaling
-  const PIXEL_SCALE = 6;        // visual scale factor (reduced from larger values)
+  const PIXEL_SCALE = 6;        // visual scale factor
 
   // Music helpers
   function startMusic() {
@@ -73,12 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (volume) volume.addEventListener('input', () => { if (music) music.volume = parseFloat(volume.value); });
   if (musicBtn) musicBtn.addEventListener('click', () => { startMusic(); toggleMusic(); });
 
-  // Heart animation helper (unchanged)
+  // Create a heart element at x,y in viewport coords
   function createHeart(x, y, color) {
     const el = document.createElement('div');
     el.className = 'heart';
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
+    // use SVG heart to keep it sharp
     el.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
       <path fill="${color}" d="M12 21s-7.5-4.9-10-8.1C-0.1 9.9 2 5 6 5c2.2 0 3.5 1.2 4 2 .5-.8 1.8-2 4-2 4 0 6.1 4.9 4 7.9-2.5 3.1-10 8.1-10 8.1z"/>
     </svg>`;
@@ -88,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
     heartsContainer.appendChild(el);
     setTimeout(()=> el.remove(), dur + 200);
   }
+
+  // Periodically spawn gentle hearts at bottom center
   let heartInterval = setInterval(() => {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
     const x = vw * (0.45 + (Math.random()-0.5)*0.18);
@@ -96,28 +97,30 @@ document.addEventListener('DOMContentLoaded', () => {
     createHeart(x, y, ['#ff6b9a','#ff9ac2','#ff4d88'][Math.floor(Math.random()*3)]);
   }, 800);
 
-  // No-button evasive behavior — adapted to emoji bear
+  // Make the no button evasive — but keep it friendly and predictable
   function moveNoButton() {
     const container = document.querySelector('.buttons');
-    if (!container || !noBtn || !yesBtn) return;
     const rect = container.getBoundingClientRect();
     const yesRect = yesBtn.getBoundingClientRect();
 
     const maxX = Math.max(6, rect.width - noBtn.offsetWidth - 6);
     const maxY = Math.max(6, rect.height - noBtn.offsetHeight - 6);
 
+    // Try to pick a spot not overlapping the Yes button
     let candidateX, candidateY, tries = 0;
     do {
       candidateX = Math.random() * maxX;
       candidateY = Math.random() * maxY;
       tries++;
       if (tries > 12) break;
+      // Convert candidate to viewport coordinates to check overlap
       const candRect = {
         left: rect.left + candidateX,
         right: rect.left + candidateX + noBtn.offsetWidth,
         top: rect.top + candidateY,
         bottom: rect.top + candidateY + noBtn.offsetHeight
       };
+      // If overlapping the yes button, try another position
       if (!(candRect.right < yesRect.left || candRect.left > yesRect.right || candRect.bottom < yesRect.top || candRect.top > yesRect.bottom)) {
         continue;
       } else break;
@@ -126,16 +129,24 @@ document.addEventListener('DOMContentLoaded', () => {
     noBtn.style.left = `${candidateX}px`;
     noBtn.style.top = `${candidateY}px`;
 
-    // show sad emoji briefly
+    // brief sad expression
     if (bear) {
-      bear.textContent = sadEmoji;
-      setTimeout(() => { if (bear) bear.textContent = happyEmoji; }, 1200);
+      bear.textContent = '😢';
+      setTimeout(() => bear.textContent = '🐻', 1400);
     }
+
     startMusic();
   }
+
+  // Add handlers for mouse and touch
   if (noBtn) {
     noBtn.addEventListener('mouseenter', moveNoButton);
-    noBtn.addEventListener('touchstart', (ev) => { ev.preventDefault(); moveNoButton(); }, { passive: false });
+    noBtn.addEventListener('touchstart', (ev) => {
+      ev.preventDefault(); // prevent click before moving
+      moveNoButton();
+    }, { passive: false });
+
+    // Small accessibility: keyboard support for No button
     noBtn.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -150,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toName && toName.trim()) {
       title.textContent = `Will you go out with me, ${toName.trim()}? ❤️`;
     } else {
+      // fallback if no toName: keep default title (or use name query param)
       if (nameParam) title.textContent = `Will you go out with me, ${decodeURIComponent(nameParam)}? ❤️`;
       else title.textContent = 'Will you go out with me? ❤️';
     }
@@ -174,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Pixelate helper (draw small then scale up) — reduced scale values
+  // Legacy pixelation helper (kept for backward compatibility)
   function showPixelatedImage(imageUrl, smallWidth = PIXEL_SMALL_WIDTH, scale = PIXEL_SCALE) {
     return new Promise((resolve, reject) => {
       if (!imageUrl) return reject(new Error('No image URL provided'));
@@ -202,26 +214,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Yes button celebration
+  // Yes button: celebrate!
   yesBtn.addEventListener('click', async () => {
     startMusic();
-    yesBtn.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 360 });
+    // gentle grow animation
+    yesBtn.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 380 });
 
+    // Launch confetti if available
     const duration = 1800;
     const animationEnd = Date.now() + duration;
     if (typeof confetti === 'function') {
       const defaults = { startVelocity: 30, spread: 140, ticks: 50, zIndex: 999 };
       (function fire() {
+        // left
         confetti(Object.assign({}, defaults, { particleCount: 20, origin: { x: 0.1, y: 0.2 } }));
+        // right
         confetti(Object.assign({}, defaults, { particleCount: 20, origin: { x: 0.9, y: 0.2 } }));
         if (Date.now() < animationEnd) requestAnimationFrame(fire);
       })();
     } else {
+      // fallback hearts
       for (let i=0;i<12;i++){
         setTimeout(()=> createHeart(window.innerWidth * (0.2 + Math.random()*0.6), window.innerHeight * (0.15 + Math.random()*0.25), ['#ff4d88','#ff9ac2','#ffc0dd'][Math.floor(Math.random()*3)]), i*60);
       }
     }
 
+    // spawn hearts near the Yes button
     const yesRect = yesBtn.getBoundingClientRect();
     for (let i=0;i<9;i++){
       setTimeout(() => {
@@ -231,31 +249,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }, i*80);
     }
 
+    // Render chosen celebration image into poohArea (uses repo asset by default)
     poohArea.innerHTML = '';
     poohArea.setAttribute('aria-hidden', 'true');
 
-    const poohUrl = params.get('pooh') || defaultPooh;
-    const embeddedFallback = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
-      <rect width="8" height="8" fill="%23ffecb3"/>
-      <rect x="1" y="1" width="6" height="4" fill="%23ffd54f"/>
-      <rect x="1" y="5" width="6" height="2" fill="%23d32f2f"/>
-      </svg>
-    ');
+    const chosenPooh = params.get('pooh') || '/assets/celebration.svg';
+    const img = document.createElement('img');
+    img.src = chosenPooh;
+    img.alt = 'Celebration';
+    img.className = 'celebration-img pop';
 
-    const imageToLoad = poohUrl || embeddedFallback;
-    try {
-      const canvas = await showPixelatedImage(imageToLoad, PIXEL_SMALL_WIDTH, PIXEL_SCALE);
-      canvas.classList.add('pop');
-      poohArea.appendChild(canvas);
+    img.onload = () => {
+      poohArea.appendChild(img);
       poohArea.setAttribute('aria-hidden', 'false');
-    } catch (err) {
-      poohArea.innerHTML = '<p style="color:#d81b60">Could not load celebration image (CORS or invalid URL). Try hosting the image in the repo or using a direct image URL.</p>';
-      poohArea.setAttribute('aria-hidden', 'false');
-    }
+    };
 
+    img.onerror = () => {
+      poohArea.innerHTML = '<p style="color:#d81b60">Could not load celebration image. Try hosting it in the repo or providing a direct URL via ?pooh=.</p>';
+      poohArea.setAttribute('aria-hidden', 'false');
+    };
+
+    // Update modal body to include the 'to' name if set
     const toName = toInput ? toInput.value : (nameParam || '');
-    const fromName = fromInput ? fromInput.value : '';
     if (toName) {
       const modalBody = document.getElementById('modalBody');
       if (modalBody) {
@@ -266,26 +281,34 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal();
   });
 
-  // Modal open/close
+  // Modal logic
   function openModal() {
     modal.setAttribute('aria-hidden','false');
     modal.style.pointerEvents = 'auto';
+    // focus first actionable element inside
     modalClose.focus();
   }
   function closeModal() {
     modal.setAttribute('aria-hidden','true');
     modal.style.pointerEvents = 'none';
     yesBtn.focus();
+    // Clean up pooh area when closing
     if (poohArea) {
       poohArea.innerHTML = '';
       poohArea.setAttribute('aria-hidden','true');
     }
   }
-  modalClose.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal(); });
+  modalClose.addEventListener('click', () => {
+    closeModal();
+  });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
+  });
 
-  // Ensure music starts only after a gesture
+  // Ensure music starts only after a gesture — also attach one-time body listeners
   function onFirstInteraction() {
     startMusic();
     document.body.removeEventListener('click', onFirstInteraction);
@@ -294,6 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', onFirstInteraction, { once:true });
   document.body.addEventListener('touchstart', onFirstInteraction, { once:true });
 
-  // Clean up on unload
+  // Clean up interval on unload
   window.addEventListener('beforeunload', () => clearInterval(heartInterval));
 });
